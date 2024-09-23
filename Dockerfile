@@ -21,14 +21,12 @@ RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o main
 
 
 ######## Start a new stage from scratch #######
-FROM alpine:latest  
+FROM ubuntu:latest  
 
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /morp/main .
-
-RUN ls -l /root/
 
 # Command to run the executable
 CMD ["./main"] 
