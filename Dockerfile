@@ -5,7 +5,7 @@ FROM golang:latest AS builder
 LABEL maintainer="Evan Deters <evanjd711@gmail.com>"
 
 # Set the Current Working Directory inside the container
-WORKDIR /goclone
+WORKDIR /morp
 
 # Copy go mod and sum files
 COPY go.mod go.sum ./
@@ -26,7 +26,7 @@ FROM alpine:latest
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /goclone/main .
+COPY --from=builder /morp/main .
 
 # Command to run the executable
 CMD ["./main"] 
