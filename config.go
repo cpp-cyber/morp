@@ -22,6 +22,8 @@ type Config struct {
 }
 
 func ReadConfig(conf *Config) {
+    conf.DiscordToken = os.Getenv("DISCORD_TOKEN")
+    conf.DiscordGuildID = os.Getenv("DISCORD_GUILD_ID")
     conf.KaminoUser = os.Getenv("KAMINO_USER")
     conf.KaminoPass = os.Getenv("KAMINO_PASS")
     conf.KaminoURL = os.Getenv("KAMINO_URL")
