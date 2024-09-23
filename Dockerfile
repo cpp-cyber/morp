@@ -28,5 +28,7 @@ WORKDIR /root/
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /morp/main .
 
+RUN apt update && apt install -y ca-certificates
+
 # Command to run the executable
 CMD ["./main"] 
