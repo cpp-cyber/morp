@@ -28,5 +28,7 @@ WORKDIR /root/
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /morp/main .
 
+RUN ls -l /root/
+
 # Command to run the executable
 CMD ["./main"] 
