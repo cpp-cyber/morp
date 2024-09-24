@@ -136,7 +136,7 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     data["filters"] = filtersList
 
     resp, err := doAPIRequest("POST", config.KaminoBulkDeleteEndpoint, data)
-    if err != nil {
+    if err != nil || resp == nil {
         embed := embed.NewEmbed()
         embed.SetTitle("Failed to delete pods")
         embed.SetColor(0xff0000)
@@ -155,10 +155,29 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
-        message := "Failed to delete pods. Check logs for more information"
+        var msgText string
+        message, err := io.ReadAll(resp.Body)
+        if err != nil {
+            msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", err)
+            s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+                Content: &msgText,
+            })
+            return
+        }
+        msg := make(map[string]string)
+        err = json.Unmarshal(message, &msg)
+        if err != nil {
+            msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", err)
+            s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+                Content: &msgText,
+            })
+            return
+        }
+        msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", msg["error"])
         s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-            Content: &message,
+            Content: &msgText,
         })
+        return
     }
 
     message := "Pods deleted"
@@ -209,11 +228,11 @@ func doAPIRequest(verb, endpoint string, data map[string]any) (*http.Response, e
 
     resp, err := cl.Do(req)
     if err != nil {
-        return nil, err
+        return resp, err
     }
 
     if resp.StatusCode != http.StatusOK {
-        return nil, fmt.Errorf("API request failed with status code %d", resp.StatusCode)
+        return resp, fmt.Errorf("API request failed with status code %d", resp.StatusCode)
     }
 
     return resp, nil
