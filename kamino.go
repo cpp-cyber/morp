@@ -130,7 +130,7 @@ func deletePod(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     data := make(map[string]any)
-    data["Filters"] = i.ApplicationCommandData().Options[0].Options[0].StringValue()
+    data["filters"] = i.ApplicationCommandData().Options[0].Options[0].StringValue()
 
     resp, err := doAPIRequest("DELETE", config.KaminoBulkDeleteEndpoint, data)
     if err != nil {
@@ -138,11 +138,7 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
         embed.SetTitle("Failed to delete pods")
         embed.SetColor(0xff0000)
         embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-            Name: "Status",
-            Value: resp.Status,
-        })
-        embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-            Name: "Error",
+            Name: "Failed to delete pods",
             Value: err.Error(),
         })
 
