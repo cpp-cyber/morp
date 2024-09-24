@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -19,7 +17,6 @@ func ConnectDB() *gorm.DB {
 func addTodo(user, content string) error {
     newTodo := todo{User: user, Task: content, Completed: false}
 
-    fmt.Println("Adding todo: ", newTodo)
     result := db.Create(&newTodo)
     if result.Error != nil {
         return result.Error

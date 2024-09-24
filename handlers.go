@@ -40,12 +40,17 @@ func TodoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
         addTodoResponse(s, i, err)
     case "get":
         if len(i.ApplicationCommandData().Options[0].Options) == 0 {
-            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-                Type: discordgo.InteractionResponseChannelMessageWithSource,
-                Data: &discordgo.InteractionResponseData{
-                    Content: "Please provide a person",
-                },
-            })
+            allTodos, err := getAllTodos()
+            if err != nil {
+                s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                    Type: discordgo.InteractionResponseChannelMessageWithSource,
+                    Data: &discordgo.InteractionResponseData{
+                        Content: "Failed to get todos: " + err.Error(),
+                    },
+                })
+                return
+            }
+            getAllTodoResponse(s, i, allTodos, err)
             return
         }
         user := i.ApplicationCommandData().Options[0].Options[0].StringValue()

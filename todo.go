@@ -50,10 +50,16 @@ func addTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, err e
         return
     }
 
+    embed := embed.NewEmbed()
+    embed.SetTitle("Todo Added")
+    embed.SetColor(0xffab40)
+    embed.AddField("Person", i.ApplicationCommandData().Options[0].Options[0].StringValue())
+    embed.AddField("Task", i.ApplicationCommandData().Options[0].Options[1].StringValue())
+
     s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
         Type: discordgo.InteractionResponseChannelMessageWithSource,
         Data: &discordgo.InteractionResponseData{
-            Content: "Todo added!",
+            Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
         },
     })
 }
@@ -81,4 +87,29 @@ func getTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, todos
                 Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
             },
         })
+}
+
+func getAllTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, todos []todo, err error) {
+    if err != nil {
+        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+            Type: discordgo.InteractionResponseChannelMessageWithSource,
+            Data: &discordgo.InteractionResponseData{
+                Content: "Failed to get todos: " + err.Error(),
+            },
+        })
+        return
+    }
+
+    embed := embed.NewEmbed()
+    embed.SetTitle("Todos")
+    embed.SetColor(0xffab40)
+    for _, t := range todos {
+        embed.AddField(fmt.Sprintf("Id: %d", t.Id), fmt.Sprintf("Person: %s\n Task: %s\n Completed: %t", t.User, t.Task, t.Completed))
+    }
+    s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+        Type: discordgo.InteractionResponseChannelMessageWithSource,
+        Data: &discordgo.InteractionResponseData{
+            Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+        },
+    })
 }
