@@ -25,15 +25,42 @@ func TodoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
     }
     switch i.ApplicationCommandData().Options[0].Name {
     case "add":
+        if len(i.ApplicationCommandData().Options[0].Options) < 2 {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    Content: "Please provide a person and a task",
+                },
+            })
+            return
+        }
         user := i.ApplicationCommandData().Options[0].Options[0].StringValue()
         content := i.ApplicationCommandData().Options[0].Options[1].StringValue()
         err := addTodo(user, content)
         addTodoResponse(s, i, err)
     case "get":
+        if len(i.ApplicationCommandData().Options[0].Options) == 0 {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    Content: "Please provide a person",
+                },
+            })
+            return
+        }
         user := i.ApplicationCommandData().Options[0].Options[0].StringValue()
         todos, err := getTodos(user)
         getTodoResponse(s, i, todos, err)
     case "complete":
+        if len(i.ApplicationCommandData().Options[0].Options) == 0 {
+            s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+                Type: discordgo.InteractionResponseChannelMessageWithSource,
+                Data: &discordgo.InteractionResponseData{
+                    Content: "Please provide an id",
+                },
+            })
+            return
+        }
         id := i.ApplicationCommandData().Options[0].Options[0].IntValue()
         todo, err := completeTodoById(int(id))
         completeTodoResponse(s, i, &todo, err)
