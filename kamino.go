@@ -195,7 +195,6 @@ func doAPIRequest(verb, endpoint string, data map[string]any) (*http.Response, e
 
 func sendErrorEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
     embed := embed.NewEmbed()
-    embed.SetTitle("Error")
     embed.SetColor(0xff0000)
     embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
         Name: "ERROR",
@@ -209,7 +208,6 @@ func sendErrorEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, err er
 
 func sendSuccessEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, message string) {
     embed := embed.NewEmbed()
-    embed.SetTitle("Success")
     embed.SetColor(0x00ff00)
     embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
         Name: "SUCCESS",
