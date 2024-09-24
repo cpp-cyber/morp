@@ -107,6 +107,7 @@ func KaminoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
                 Content: "Cloning competition...",
             },
         })
+        competitionClone(s, i)
     }
 
 }
