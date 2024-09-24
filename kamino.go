@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -59,20 +60,15 @@ func refreshLogin() {
 func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     resp, err := doAPIRequest("GET", config.KaminoGetPodsEndpoint, nil)
     if err != nil {
-        fmt.Println(err)
-        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-            Type: discordgo.InteractionResponseChannelMessageWithSource,
-            Data: &discordgo.InteractionResponseData{
-                Content: "Failed to get pods",
-            },
-        })
+        sendErrorEmbed(s, i, err)
         return
     }
     defer resp.Body.Close()
 
     respBody, err := io.ReadAll(resp.Body)
     if err != nil {
-        fmt.Println(err)
+        sendErrorEmbed(s, i, err)
+        return
     }
 
     type pods struct {
@@ -95,7 +91,6 @@ func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     for i, pod := range podList {
         podString += fmt.Sprintf("%d. %s\n", i+1, pod.Name)
     }
-
     embed.AddField("Pods", podString)
 
     s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -111,22 +106,13 @@ func deletePod(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
     resp, err := doAPIRequest("DELETE", config.KaminoDeleteEndpoint + "/" + podId, nil)
     if err != nil {
-        fmt.Println(err)
+        sendErrorEmbed(s, i, err)
+        return
     }
     defer resp.Body.Close()
 
-    if resp.StatusCode != http.StatusOK {
-        message := fmt.Sprintf("Failed to delete pod %s", podId)
-        s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-            Content: &message,
-        })
-        return
-    }
-
     message := fmt.Sprintf("Pod %s deleted", podId)
-    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-        Content: &message,
-    })
+    sendSuccessEmbed(s, i, message)
 }
 
 func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -137,74 +123,43 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
     resp, err := doAPIRequest("POST", config.KaminoBulkDeleteEndpoint, data)
     if err != nil || resp == nil {
-        embed := embed.NewEmbed()
-        embed.SetTitle("Failed to delete pods")
-        embed.SetColor(0xff0000)
-        embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
-            Name: "Failed to delete pods",
-            Value: err.Error(),
-        })
-
-        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-            Type: discordgo.InteractionResponseChannelMessageWithSource,
-            Data: &discordgo.InteractionResponseData{
-                Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
-            },
-        })
+        sendErrorEmbed(s, i, err)
+        return
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
-        var msgText string
         message, err := io.ReadAll(resp.Body)
         if err != nil {
-            msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", err)
-            s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-                Content: &msgText,
-            })
+            sendErrorEmbed(s, i, err)
             return
         }
         msg := make(map[string]string)
         err = json.Unmarshal(message, &msg)
         if err != nil {
-            msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", err)
-            s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-                Content: &msgText,
-            })
+            sendErrorEmbed(s, i, err)
             return
         }
-        msgText = fmt.Sprintf("Failed to delete pods. Error: ```\n%s\n```", msg["error"])
-        s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-            Content: &msgText,
-        })
+
+        failedPodsError := errors.New(msg["error"])
+        sendErrorEmbed(s, i, failedPodsError)
         return
     }
 
     message := "Pods deleted"
-    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-        Content: &message,
-    })
+    sendSuccessEmbed(s, i, message)
 }
 
 func refreshTemplates(s *discordgo.Session, i *discordgo.InteractionCreate) {
     resp, err := doAPIRequest("POST", config.KaminoRefreshTemplatesEndpoint, nil)
     if err != nil {
-        fmt.Println(err)
+        sendErrorEmbed(s, i, err)
+        return
     }
     defer resp.Body.Close()
 
-    if resp.StatusCode != http.StatusOK {
-        message := "Failed to refresh templates. Check logs for more information"
-        s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-            Content: &message,
-        })
-        return
-    }
-
     message := "Templates refreshed"
-    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-        Content: &message,
-    })
+    sendSuccessEmbed(s, i, message)
 }
 
 func doAPIRequest(verb, endpoint string, data map[string]any) (*http.Response, error) {
@@ -236,4 +191,32 @@ func doAPIRequest(verb, endpoint string, data map[string]any) (*http.Response, e
     }
 
     return resp, nil
+}
+
+func sendErrorEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+    embed := embed.NewEmbed()
+    embed.SetTitle("Error")
+    embed.SetColor(0xff0000)
+    embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+        Name: "ERROR",
+        Value: err.Error(),
+    })
+    
+    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+        Embeds: &[]*discordgo.MessageEmbed{embed.MessageEmbed},
+    })
+}
+
+func sendSuccessEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, message string) {
+    embed := embed.NewEmbed()
+    embed.SetTitle("Success")
+    embed.SetColor(0x00ff00)
+    embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+        Name: "SUCCESS",
+        Value: message,
+    })
+    
+    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+        Embeds: &[]*discordgo.MessageEmbed{embed.MessageEmbed},
+    })
 }
