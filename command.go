@@ -132,7 +132,7 @@ var (
                         {
                             Type:        discordgo.ApplicationCommandOptionString,
                             Name:        "filter",
-                            Description: "Filter for a bulk delete operation.",
+                            Description: "Filter for a bulk delete operation. Takes a comma separated list of filters.",
                             Required:    true,
                         },
                     },

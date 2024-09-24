@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"strings"
 	"time"
 
 	"github.com/Clinet/discordgo-embed"
@@ -130,7 +131,9 @@ func deletePod(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     data := make(map[string]any)
-    data["filters"] = i.ApplicationCommandData().Options[0].Options[0].StringValue()
+    filters := strings.ReplaceAll(i.ApplicationCommandData().Options[0].Options[0].StringValue(), " ", "")
+    filtersList := strings.Split(filters, ",")
+    data["filters"] = filtersList
 
     resp, err := doAPIRequest("POST", config.KaminoBulkDeleteEndpoint, data)
     if err != nil {
