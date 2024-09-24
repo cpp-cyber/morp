@@ -132,7 +132,7 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     data := make(map[string]any)
     data["filters"] = i.ApplicationCommandData().Options[0].Options[0].StringValue()
 
-    resp, err := doAPIRequest("DELETE", config.KaminoBulkDeleteEndpoint, data)
+    resp, err := doAPIRequest("POST", config.KaminoBulkDeleteEndpoint, data)
     if err != nil {
         embed := embed.NewEmbed()
         embed.SetTitle("Failed to delete pods")
