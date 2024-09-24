@@ -134,12 +134,28 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
     resp, err := doAPIRequest("DELETE", config.KaminoBulkDeleteEndpoint, data)
     if err != nil {
-        fmt.Println(err)
+        embed := embed.NewEmbed()
+        embed.SetTitle("Failed to delete pods")
+        embed.SetColor(0xff0000)
+        embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+            Name: "Status",
+            Value: resp.Status,
+        })
+        embed.Fields = append(embed.Fields, &discordgo.MessageEmbedField{
+            Name: "Error",
+            Value: err.Error(),
+        })
+
+        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+            Type: discordgo.InteractionResponseChannelMessageWithSource,
+            Data: &discordgo.InteractionResponseData{
+                Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+            },
+        })
     }
     defer resp.Body.Close()
 
     if resp.StatusCode != http.StatusOK {
-
         message := "Failed to delete pods. Check logs for more information"
         s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
             Content: &message,
