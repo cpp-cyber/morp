@@ -121,7 +121,7 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     filtersList := strings.Split(filters, ",")
     data["filters"] = filtersList
 
-    resp, err := doAPIRequest("POST", config.KaminoBulkDeleteEndpoint, data)
+    resp, err := doAPIRequest("DELETE", config.KaminoBulkDeleteEndpoint, data)
     if err != nil || resp == nil {
         sendErrorEmbed(s, i, err)
         return
@@ -149,6 +149,66 @@ func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
     message := "Pods deleted"
     sendSuccessEmbed(s, i, message)
 }
+
+func competitionClone(s *discordgo.Session, i *discordgo.InteractionCreate) {
+    if len(i.ApplicationCommandData().Options[0].Options) < 2 {
+        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+            Type: discordgo.InteractionResponseChannelMessageWithSource,
+            Data: &discordgo.InteractionResponseData{
+                Content: "Please provide a template and number of teams.",
+            },
+        })
+        return
+    }
+
+    template := i.ApplicationCommandData().Options[0].Options[0].StringValue()
+    count := i.ApplicationCommandData().Options[0].Options[1].IntValue()
+    data := map[string]any{
+        "template": template,
+        "count": count,
+    }
+
+    resp, err := doAPIRequest("POST", config.KaminoCompetitionCloneEndpoint, data)
+    if err != nil {
+        sendErrorEmbed(s, i, err)
+        return
+    }
+    defer resp.Body.Close()
+
+    type compCloneResponse struct {
+        Message string `json:"message"`
+        Users map[string]string `json:"users"`
+    }
+
+    respBody, err := io.ReadAll(resp.Body)
+    if err != nil {
+        sendErrorEmbed(s, i, err)
+        return
+    }
+
+    var compCloneResp compCloneResponse
+    err = json.Unmarshal(respBody, &compCloneResp)
+    if err != nil {
+        sendErrorEmbed(s, i, err)
+        return
+    }
+
+    embed := embed.NewEmbed()
+    embed.SetTitle("Competition Clone")
+    embed.SetColor(0xffab40)
+    embed.AddField("Message", compCloneResp.Message)
+
+    usersString := "```\n"
+    for user, password := range compCloneResp.Users {
+        usersString += fmt.Sprintf("%s: %s\n", user, password)
+    }
+    embed.AddField("Users", usersString + "```")
+
+    s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+        Embeds: &[]*discordgo.MessageEmbed{embed.MessageEmbed},
+    })
+}
+
 
 func refreshTemplates(s *discordgo.Session, i *discordgo.InteractionCreate) {
     resp, err := doAPIRequest("POST", config.KaminoRefreshTemplatesEndpoint, nil)

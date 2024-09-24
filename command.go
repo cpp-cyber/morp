@@ -143,6 +143,26 @@ var (
                     Name:        "refresh",
                     Description: "Refresh templates",
                 },
+
+                {
+                    Type:        discordgo.ApplicationCommandOptionSubCommand,
+                    Name:        "competition-clone",
+                    Description: "Clone pods for a competition and create respective users.",
+                    Options: []*discordgo.ApplicationCommandOption{
+                        {
+                            Type:        discordgo.ApplicationCommandOptionString,
+                            Name:        "template",
+                            Description: "Name of the template to clone pods for.",
+                            Required:    true,
+                        },
+                        {
+                            Type:        discordgo.ApplicationCommandOptionString,
+                            Name:        "count",
+                            Description: "Number of teams to clone for.",
+                            Required:    true,
+                        },
+                    },
+                },
             },
         },
 	}

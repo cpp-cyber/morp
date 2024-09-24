@@ -100,6 +100,13 @@ func KaminoHandler(s *discordgo.Session, i *discordgo.InteractionCreate) {
             },
         })
         refreshTemplates(s, i)
+    case "competition-clone":
+        s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+            Type: discordgo.InteractionResponseChannelMessageWithSource,
+            Data: &discordgo.InteractionResponseData{
+                Content: "Cloning competition...",
+            },
+        })
     }
 
 }

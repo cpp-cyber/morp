@@ -19,6 +19,7 @@ type Config struct {
     KaminoDeleteEndpoint string
     KaminoBulkDeleteEndpoint string
     KaminoRefreshTemplatesEndpoint string
+    KaminoCompetitionCloneEndpoint string
     DBPath string
 }
 
@@ -33,5 +34,6 @@ func ReadConfig(conf *Config) {
     conf.KaminoDeleteEndpoint = os.Getenv("KAMINO_DELETE_ENDPOINT")
     conf.KaminoBulkDeleteEndpoint = os.Getenv("KAMINO_BULK_DELETE_ENDPOINT")
     conf.KaminoRefreshTemplatesEndpoint = os.Getenv("KAMINO_REFRESH_TEMPLATES_ENDPOINT")
+    conf.KaminoCompetitionCloneEndpoint = os.Getenv("KAMINO_COMPETITION_CLONE_ENDPOINT")
     conf.DBPath = os.Getenv("DB_PATH")
 }
