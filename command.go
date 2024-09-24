@@ -156,7 +156,7 @@ var (
                             Required:    true,
                         },
                         {
-                            Type:        discordgo.ApplicationCommandOptionString,
+                            Type:        discordgo.ApplicationCommandOptionInteger,
                             Name:        "count",
                             Description: "Number of teams to clone for.",
                             Required:    true,
