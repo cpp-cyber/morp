@@ -60,15 +60,21 @@ func refreshLogin() {
 func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	resp, err := doAPIRequest("GET", config.KaminoGetPodsEndpoint, nil)
 	if err != nil {
-		sendErrorEmbed(s, i, err)
+		fmt.Println(err)
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Failed to get pods",
+				Flags:   64,
+			},
+		})
 		return
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		sendErrorEmbed(s, i, err)
-		return
+		fmt.Println(err)
 	}
 
 	type pods struct {
@@ -84,14 +90,17 @@ func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	embed := embed.NewEmbed()
-	embed.SetTitle("Pods")
-	embed.SetColor(0xffab40)
+	embed.SetTitle("ㅤ")
+	embed.SetColor(0xE0C460)
+	embed.SetAuthor("Kamino", "https://kamino.calpolyswift.org/img/bruharmy.0e3831f1.png")
 
 	podString := ""
 	for i, pod := range podList {
-		podString += fmt.Sprintf("%d. %s\n", i+1, pod.Name)
+		podString += fmt.Sprintf("%d. `%s`\n", i+1, pod.Name)
 	}
+
 	embed.AddField("Pods", podString)
+	embed.SetFooter(fmt.Sprintf("ㅤ\nTotal: %d", len(podList)))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -194,9 +203,10 @@ func competitionClone(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 
 	embed := embed.NewEmbed()
-	embed.SetTitle("Competition Clone")
-	embed.SetColor(0xffab40)
-	embed.AddField("Message", compCloneResp.Message)
+	embed.SetTitle("ㅤ\nCompetition Clone")
+	embed.SetColor(0xE0C460)
+	embed.SetDescription(fmt.Sprintf("%s\nㅤ", compCloneResp.Message))
+	embed.SetAuthor("Kamino", "https://kamino.calpolyswift.org/img/bruharmy.0e3831f1.png")
 
 	usersString := "```\n"
 	for user, password := range compCloneResp.Users {
@@ -231,7 +241,6 @@ func doAPIRequest(verb, endpoint string, data map[string]any) (*http.Response, e
 		body = bytes.NewReader(jsonBody)
 	}
 
-	fmt.Println(config.KaminoURL + endpoint)
 	req, err := http.NewRequest(verb, config.KaminoURL+endpoint, body)
 	if err != nil {
 		return nil, err

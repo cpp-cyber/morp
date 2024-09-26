@@ -79,5 +79,5 @@ func deleteTodoById(id int) error {
 }
 
 func updateTodoById(id int, content string) error {
-	return db.Model(&todo{}).Where("Id = ?", id).Update("content", content).Error
+	return db.Model(&todo{}).Where("Id = ?", id).Update("task", content).Error
 }

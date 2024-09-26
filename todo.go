@@ -38,16 +38,16 @@ func completeTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Failed to complete todo: " + err.Error(),
+				Flags:   64,
 			},
 		})
 		return
 	}
 
 	embed := embed.NewEmbed()
-	embed.SetTitle("Todo Completed")
-	embed.SetColor(0xE0C460)
-	embed.AddField("Person", todo.User)
-	embed.AddField("Task", todo.Task)
+	embed.SetTitle("TODO Completed")
+	embed.SetColor(0x33D6F5)
+	embed.SetDescription(fmt.Sprintf("ㅤ\n%s\n```%s```", todo.User, todo.Task))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -67,17 +67,19 @@ func addTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, err e
 		})
 		return
 	}
+	user := i.ApplicationCommandData().Options[0].Options[0].StringValue()
+	task := i.ApplicationCommandData().Options[0].Options[1].StringValue()
 
 	embed := embed.NewEmbed()
-	embed.SetTitle("Todo Added")
-	embed.SetColor(0xE0C460)
-	embed.AddField("Person", i.ApplicationCommandData().Options[0].Options[0].StringValue())
-	embed.AddField("Task", i.ApplicationCommandData().Options[0].Options[1].StringValue())
+	embed.SetTitle("TODO Added")
+	embed.SetColor(0x33D6F5)
+	embed.SetDescription(fmt.Sprintf("```%s```", task))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+			Content: user,
+			Embeds:  []*discordgo.MessageEmbed{embed.MessageEmbed},
 		},
 	})
 }
@@ -88,37 +90,28 @@ func getTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, todos
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Failed to get todos: " + err.Error(),
+				Flags:   64,
 			},
 		})
 		return
 	}
 
 	member, err := getDiscordUser(todos[0].User)
-	tasks := []*discordgo.MessageEmbedField{}
+	memberAvatar := member.User.AvatarURL("100")
 
+	embed := embed.NewEmbed()
+	embed.SetTitle("ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ")
+	embed.SetColor(0x33D6F5)
 	for _, t := range todos {
-		tasks = append(tasks, &discordgo.MessageEmbedField{
-			Name:   fmt.Sprintf("ID: %d", t.Id),
-			Value:  fmt.Sprintf("```%s```ㅤ", t.Task),
-			Inline: false,
-		})
+		embed.AddField(fmt.Sprintf("ID: %d", t.Id), fmt.Sprintf("```%s```ㅤ", t.Task))
 	}
-
-	embed := &discordgo.MessageEmbed{
-		Title: "ㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ",
-		Color: 0xE0C460,
-		Author: &discordgo.MessageEmbedAuthor{
-			Name:    member.User.Username,
-			IconURL: member.User.AvatarURL("100"),
-		},
-		Description: fmt.Sprintf("**Total**\n╠ Uncompleted Tasks: **%d**\n╚ Completed Tasks: **%d**\nㅤ", len(todos), numCompleted),
-		Fields:      tasks,
-	}
+	embed.SetFooter(fmt.Sprintf("Uncompleted: %d ㅤ• ㅤCompleted: %d", len(todos), numCompleted))
+	embed.SetAuthor(member.User.Username, memberAvatar)
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed},
+			Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
 		},
 	})
 }
@@ -129,6 +122,7 @@ func getAllTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, to
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
 				Content: "Failed to get todos: " + err.Error(),
+				Flags:   64,
 			},
 		})
 		return
@@ -136,12 +130,51 @@ func getAllTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, to
 
 	embed := embed.NewEmbed()
 	embed.SetTitle("TODOsㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤㅤ\nㅤ")
-	embed.SetColor(0xE0C460)
-	embed.SetThumbnail("https://cdn-icons-png.flaticon.com/512/9717/9717679.png")
+	embed.SetColor(0x33D6F5)
 	for _, t := range todos {
 		embed.AddField(fmt.Sprintf("ID: %d", t.Id), fmt.Sprintf("%s\n```%s```ㅤ", t.User, t.Task))
 	}
-	embed.SetFooter(fmt.Sprintf("Total: %d", len(todos)))
+	embed.SetFooter(fmt.Sprintf("Uncompleted: %d", len(todos)))
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed.MessageEmbed},
+		},
+	})
+}
+
+func removeTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	embed := &discordgo.MessageEmbed{
+		Title: "TODO(s) Removed",
+		Color: 0x33D6F5,
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{embed},
+		},
+	})
+}
+
+func updateTodoResponse(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+	if err != nil {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Failed to update todo: " + err.Error(),
+				Flags:   64,
+			},
+		})
+		return
+	}
+
+	embed := embed.NewEmbed()
+	embed.SetTitle("TODO Updated")
+	embed.SetColor(0x33D6F5)
+	embed.SetDescription(fmt.Sprintf("ㅤ\n**ID: %d**\n```%s```", i.ApplicationCommandData().Options[0].Options[0].IntValue(),
+		i.ApplicationCommandData().Options[0].Options[1].StringValue()))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
