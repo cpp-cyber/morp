@@ -95,11 +95,20 @@ func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	embed.SetAuthor("Kamino", "https://kamino.calpolyswift.org/img/bruharmy.0e3831f1.png")
 
 	podString := ""
+	maxPodsPerField := 20
+	fieldCount := 0
+
 	for i, pod := range podList {
 		podString += fmt.Sprintf("%d. `%s`\n", i+1, pod.Name)
+
+		// When reaching 25 elements, add a new field and reset podString
+		if (i+1)%maxPodsPerField == 0 || i+1 == len(podList) {
+			embed.AddField(fmt.Sprintf("Pods (%d-%d)", fieldCount*maxPodsPerField+1, i+1), podString)
+			podString = ""
+			fieldCount++
+		}
 	}
 
-	embed.AddField("Pods", podString)
 	embed.SetFooter(fmt.Sprintf("ㅤ\nTotal: %d", len(podList)))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
