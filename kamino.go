@@ -101,7 +101,6 @@ func getPods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for i, pod := range podList {
 		podString += fmt.Sprintf("%d. `%s`\n", i+1, pod.Name)
 
-		// When reaching 25 elements, add a new field and reset podString
 		if (i+1)%maxPodsPerField == 0 || i+1 == len(podList) {
 			embed.AddField(fmt.Sprintf("Pods (%d-%d)", fieldCount*maxPodsPerField+1, i+1), podString)
 			podString = ""
