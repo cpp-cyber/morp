@@ -135,8 +135,7 @@ func deletePod(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func bulkDeletePods(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := make(map[string]any)
-	filters := strings.ReplaceAll(i.ApplicationCommandData().Options[0].Options[0].StringValue(), " ", "")
-	filtersList := strings.Split(filters, ",")
+	filtersList := strings.Split(i.ApplicationCommandData().Options[0].Options[0].StringValue(), ",")
 	data["filters"] = filtersList
 
 	resp, err := doAPIRequest("DELETE", config.KaminoBulkDeleteEndpoint, data)
