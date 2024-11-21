@@ -52,7 +52,8 @@ func Login() *http.Client {
 
 func refreshLogin() {
 	for {
-		<-time.After(30 * time.Minute)
+		<-time.After(time.Minute)
+        fmt.Println("Refreshing Kamino login")
 		NewKaminoClient()
 	}
 }
